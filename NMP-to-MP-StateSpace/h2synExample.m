@@ -33,32 +33,34 @@ wSize = 1;
 
 %Transfer function used
 
-PlantNumerator = [1 2];
+PlantNumerator = [1 -2];
 PlantDenominator = [1 10 100];
 Gtf = tf(PlantNumerator,PlantDenominator);
 
 % state space
 [Ag Bg Cg Dg] = tf2ss(PlantNumerator,PlantDenominator);
 
-% Constructing the regulator matrices
+% Constructing the regulator-formulation matrices
 
 A = Ag;
 
 B1 = zeros(size(A,1),wSize);   
+% B1 = Bg;
 B2 = Bg;
 
 C1 = [-Cg;zeros(size(Cg,1),size(A,2))];
 C2 = -Cg;
 
-D11 = [ones(size(Cg,1),wSize); zeros(size(Cg,1),wSize)];
-D12 = [-Dg;ones(size(Cg,1),size(Bg,2))];
-D21 = ones(size(Cg,1),wSize);
+D11 = [-eye(size(Cg,1),wSize); zeros(size(Cg,1),wSize)];
+D12 = [-Dg;eye(size(Cg,1),size(Bg,2))];
+D21 = eye(size(Cg,1),wSize);
 D22 = -Dg;
 
-
+% 
 % A = Ag;
 % 
-% B1 = zeros(size(A,1),wSize);  
+% % B1 = zeros(size(A,1),wSize);  
+% B1 = Bg;
 % B2 = Bg;
 % 
 % C1 = [-Cg;zeros(size(Cg,1),size(A,2))];
@@ -68,38 +70,38 @@ D22 = -Dg;
 % D12 = [-Dg;ones(size(Cg,1),size(Bg,2))];
 % D21 = ones(size(Cg,1),wSize);
 % D21 = [zeros(size(Cg,1),wSize-size(Dg,2)), Dg];
-% D22 = 0;
+% D22 = -Dg;
+% % 
+
+
+
+
+
 % 
-
-
-
-
-
-
-
-%constructing P (for optimal control formulation)
-
-P = ss(Ag,[B1 B2], [C1;C2], [D11 D12; D21 D22]);
-
-%finding the optimal controller K, and the closed loop ss CL
-
-[K1 CL] = h2syn(P,size(B2,2),size(Cg,1));
-
-
-%controller transfer function
-[Cnum, Cden] = ss2tf(K1.A,K1.B,K1.C,K1.D);
-Ctf1 = tf(Cnum,Cden);
-
-
-%closed loop
-Gcl = feedback(Gtf,Ctf1);
-
-disp("Poles of Gcl: ");
-disp(pole(Gcl));
-
-disp("Poles of CL (ss): ");
-disp(eig(CL.A));
-        
+% 
+% %constructing P (for optimal control formulation)
+% 
+% P = ss(Ag,[B1 B2], [C1;C2], [D11 D12; D21 D22]);
+% 
+% %finding the optimal controller K, and the closed loop ss CL
+% 
+% [K1 CL] = h2syn(P,size(B2,2),size(Cg,1));
+% 
+% 
+% %controller transfer function
+% [Cnum, Cden] = ss2tf(K1.A,K1.B,K1.C,K1.D);
+% Ctf1 = tf(Cnum,Cden);
+% 
+% 
+% %closed loop
+% Gcl = feedback(Gtf,Ctf1);
+% 
+% disp("Poles of Gcl: ");
+% disp(pole(Gcl));
+% 
+% disp("Poles of CL (ss): ");
+% disp(eig(CL.A));
+%         
 
 A = Ag;
 B = Bg;
@@ -166,7 +168,8 @@ LMI5 = trace(Z);
 F = [LMI1<0, LMI2>0,LMI4>0, LMI5<gamma];%, LMI6==0];
 % F = [LMI1 == 0];
 opt = sdpsettings('solver','mosek','verbose',0);
-solvesdp(F,gamma,opt);
+% solvesdp(F,gamma,opt);
+solvesdp(F,[],opt); 
 
 X1 = double(X1);
 Y1 = double(Y1);
@@ -205,3 +208,8 @@ Ctf = tf(Css);
 
 Gcl = feedback(Gtf,Ctf);
 Gbar = Gtf+1/Ctf;
+
+figure
+bode(Gtf,Gbar,1/Gbar);
+leg1 = legend('$P(s)$','$\bar{G}$','$\frac{1}{\bar{G}(s)}$');
+set(leg1,'interpreter','latex','FontSize',12);
