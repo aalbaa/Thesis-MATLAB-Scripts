@@ -110,4 +110,4 @@ LMI1 = [E11 E12 E13;
         E13' E23' -1];
     
 F = [LMI1<0];
-solve(F,gamma);
+solvesdp(F,gamma);
