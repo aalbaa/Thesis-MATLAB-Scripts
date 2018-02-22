@@ -1,0 +1,22 @@
+function [Ads, Bds, Cds, Dds, Eds] = ss2dssD(G)
+
+n = size(Ap,1);
+if norm(Dp)<0.01        
+        Eds = eye(n+1); Eds(n+1,n+1)=0;
+
+        Ads = [Ap zeros(n,1);
+                zeros(1,n) 1];
+
+        Bds = [Bp;1];
+
+        Cds = [Cp 1];
+
+        Dds = 1;
+else
+    Eds = eye(n);
+    Ads = Ap;
+    Bds = Bp;
+    Cds = Cp;
+    Dds = Dp;
+end
+    

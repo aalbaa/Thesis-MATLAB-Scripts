@@ -41,37 +41,38 @@ Gtf = tf(PlantNumerator,PlantDenominator);
 [Ag Bg Cg Dg] = tf2ss(PlantNumerator,PlantDenominator);
 
 % Constructing the regulator-formulation matrices
-
-A = Ag;
-
-B1 = zeros(size(A,1),wSize);   
-% B1 = Bg;
-B2 = Bg;
-
-C1 = [-Cg;zeros(size(Cg,1),size(A,2))];
-C2 = -Cg;
-
-D11 = [-eye(size(Cg,1),wSize); zeros(size(Cg,1),wSize)];
-D12 = [-Dg;eye(size(Cg,1),size(Bg,2))];
-D21 = eye(size(Cg,1),wSize);
-D22 = -Dg;
-
 % 
 % A = Ag;
 % 
-% % B1 = zeros(size(A,1),wSize);  
-% B1 = Bg;
+% B1 = zeros(size(A,1),wSize);   
+% % B1 = Bg;
 % B2 = Bg;
 % 
 % C1 = [-Cg;zeros(size(Cg,1),size(A,2))];
 % C2 = -Cg;
 % 
-% D11 = 0;%[ones(size(Cg,1),wSize); zeros(size(Cg,1),wSize)];
-% D12 = [-Dg;ones(size(Cg,1),size(Bg,2))];
-% D21 = ones(size(Cg,1),wSize);
-% D21 = [zeros(size(Cg,1),wSize-size(Dg,2)), Dg];
+% D11 = [-eye(size(Cg,1),wSize); zeros(size(Cg,1),wSize)];
+% D12 = [-Dg;eye(size(Cg,1),size(Bg,2))];
+% D21 = eye(size(Cg,1),wSize);
 % D22 = -Dg;
-% % 
+
+
+A = Ag;
+
+% B1 = zeros(size(A,1),wSize);  
+B1 = Bg;
+B2 = Bg;
+
+C1 = [-Cg];%;zeros(size(Cg,1),size(A,2))];
+C2 = -Cg;
+
+D11 = 0;%[ones(size(Cg,1),wSize); zeros(size(Cg,1),wSize)];
+D12 = [-Dg];%;zeros(size(Cg,1),size(Bg,2))];
+D21 = zeros(size(Cg,1),wSize);
+% D21 = [0 0];
+D21 = [zeros(size(Cg,1),wSize-size(Dg,2)), Dg];
+D22 = 0;
+% 
 
 
 
@@ -130,8 +131,8 @@ numOutputs = 1;
 An = sdpvar(numStates,numStates);
 Bn = sdpvar(numStates,numInputs);
 Cn = sdpvar(numOutputs,numStates);
-% Dn = sdpvar(numOutputs,numInputs);
-Dn = 0;
+Dn = sdpvar(numOutputs,numInputs);
+% Dn = 0;
 
 
 %%% LMI 1;
@@ -165,11 +166,11 @@ LMI5 = trace(Z);
 
         
     
-F = [LMI1<0, LMI2>0,LMI4>0, LMI5<gamma];%, LMI6==0];
+F = [LMI1<0, LMI2>0,LMI4>0, LMI5<gamma, LMI3==0];%, LMI6==0];
 % F = [LMI1 == 0];
 opt = sdpsettings('solver','mosek','verbose',0);
-% solvesdp(F,gamma,opt);
-solvesdp(F,[],opt); 
+solvesdp(F,gamma,opt);
+% solvesdp(F,[],opt); 
 
 X1 = double(X1);
 Y1 = double(Y1);
