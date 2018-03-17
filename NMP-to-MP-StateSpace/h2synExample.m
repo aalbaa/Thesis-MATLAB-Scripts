@@ -146,6 +146,7 @@ LMI1 = [E11 E12 E13;
         E12' E22 E23;
         E13' E23' -1];
     
+% <<<<<<< HEAD
 F11 = Y1;
 F12 = eye(size(Y1,1),size(X1,2));
 F13 = Y1'*C1'+Cn'*D12';
@@ -214,3 +215,7 @@ figure
 bode(Gtf,Gbar,1/Gbar);
 leg1 = legend('$P(s)$','$\bar{G}$','$\frac{1}{\bar{G}(s)}$');
 set(leg1,'interpreter','latex','FontSize',12);
+% =======
+F = [LMI1<0];
+solvesdp(F,gamma);
+% >>>>>>> f01c9d09e76dba03186bc0e4246802ba7112308f
