@@ -1,4 +1,4 @@
-function [Acl, Bcl, Ccl, Dcl, Ecl] = dss2dssCL(P,C);
+    function [Acl, Bcl, Ccl, Dcl, Ecl] = dss2dssCL(P,C);
 
 [Ap Bp Cp Dp Ep] = ss2dssD(P);
 [Ac Bc Cc Dc Ec] = ss2dssD(C);
@@ -21,7 +21,8 @@ function [Acl, Bcl, Ccl, Dcl, Ecl] = dss2dssCL(P,C);
 
 
 Dk = inv(1+Dc*Dp);
-Cclp = Cp-Dp*Dk*Dp;
+% Cclp = Cp-Dp*Dk*Dp;   % Mistake
+Cclp = Cp-Dp*Dk*Cp;     % Mistake corrected 
 Cclc = -Dp*Dk*Cc;
 
 Ccp = Dk*Dc*Cp;

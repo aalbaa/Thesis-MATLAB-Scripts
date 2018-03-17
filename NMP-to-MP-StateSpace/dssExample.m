@@ -10,7 +10,7 @@ home;
 
 %Consider the following TF (plant)
 
-p = tf(2*[1 1],[1 -1 1]);
+p = tf(3*[1 1],[1 -1 1]);
 
 P = ss(p);
 
@@ -18,7 +18,7 @@ P = ss(p);
 
 [Ap Bp Cp Dp Ep] = ss2dssD(P);
 
-c = tf([1 0],1);
+c = tf([1 1],1);
 
 C = ss(c);
 
@@ -28,9 +28,9 @@ C = ss(c);
 [Acl, Bcl, Ccl, Dcl, Ecl] = dss2dssCL(P,C);
 Gcl = dss(Acl,Bcl,Ccl,Dcl,Ecl);
 
-gcl = tf(Gcl);
+gcl = tf(Gcl)
 
 
-
+gclTF = feedback(p,c)
 
 
