@@ -1,4 +1,9 @@
-    function [Acl, Bcl, Ccl, Dcl, Ecl] = dss2dssCL(P,C);
+% Log: 
+%   March 20, 16:00: changed output from [Acl,Bcl,Ccl,Dcl,Ecl] 
+%                       to [SYS_CL_DSS, Acl, Bcl, Ccl, Dcl, Ecl];
+
+
+function [SYS_CL_DSS, Acl, Bcl, Ccl, Dcl, Ecl] = dss2dssCL(P,C);
 
 [Ap Bp Cp Dp Ep] = ss2dssD(P);
 [Ac Bc Cc Dc Ec] = ss2dssD(C);
@@ -41,3 +46,7 @@ Bcl = [Bp*(1-Dcc);
         Bc*Dcl];
     
 Ecl = blkdiag(Ep,Ec);
+
+SYS_CL_DSS = dss(Acl, Bcl, Ccl, Dcl, Ecl);
+
+end
