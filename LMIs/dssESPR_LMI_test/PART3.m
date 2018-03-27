@@ -78,19 +78,47 @@ num = [0.5 3.5 4];  % numerator of the passive system
 %         Ccdss = [Ccdss, zeros(1,np-nc)];
 %         %thus
 %         nc = np;
-        
 %         
-%         Acbar = sdpvar(nc,nc,'full');
-%         Ccbar = sdpvar(1,nc);
+        % does min realization affect things?
+%         PminSys = minreal(dss(Apdss,Bpdss,Cpdss,Dpdss,Epdss));
+%         CminSys = minreal(dss(Acdss,Bcdss,Ccdss,Dcdss,Ecdss));
+%         
+%         Apdss = PminSys.A;
+%         Bpdss = PminSys.B;
+%         Cpdss = PminSys.C;
+%         Dpdss = PminSys.D;
+%         Epdss = PminSys.E;
+%         if isempty(Epdss)
+%             Epdss=eye(size(Apdss,1));
+%         end
+%         
+%         np = size(Apdss,1);
+%         
+%         Acdss = CminSys.A;
+%         Bcdss = CminSys.B;
+%         Ccdss = CminSys.C;
+%         Dcdss = CminSys.D;
+%         Ecdss = CminSys.E;
+%         if isempty(Ecdss)
+%             Ecdss=eye(size(Acdss));
+%         end
+%         
+%         
+%         nc = size(Acdss,1);
+        
+        Acbar = sdpvar(nc,nc,'full');
+        Ccbar = sdpvar(1,nc);
         
         %size of Bc must be the same as size of Bp (look at Q2)
         
-        
-        Q1 = sdpvar(np,np,'full','real');
+        Q1 = sdpvar(np);
+%         Q1 = sdpvar(np,np,'full','real');
         Q2 = sdpvar(np,nc,'full','real');     
-        Q3 = sdpvar(nc,np,'full','real');
-        Q4 = sdpvar(nc,nc,'full','real');
-%         Q4 = Q3;
+%         Q3 = sdpvar(nc,np,'full','real');
+        Q3 = Q2';
+%         Q4 = sdpvar(nc,nc,'full','real');
+%         Q4 = sdpvar(nc);
+        Q4 = Q3;
         
         Q = [Q1, Q2; Q3, Q4];
         
@@ -147,9 +175,11 @@ num = [0.5 3.5 4];  % numerator of the passive system
         Acbar = sdpvar(nc,nc,'full');
         Ccbar = sdpvar(1,nc);
         
-        Q1 = sdpvar(np,np,'full','real');
-        Q2 = sdpvar(np,nc,'full','real');  
-        Q3 = Q2;        
+%         Q1 = sdpvar(np,np,'full','real');
+        Q1 = sdpvar(np);
+%         Q2 = sdpvar(np,nc,'full','real');  
+        Q2 = sdpvar(np);
+        Q3 = Q2';        
 %         Q3 = sdpvar(nc,np,'full','real');        
 %         Q4 = sdpvar(nc,nc,'full','real');
         Q4 = Q3;
@@ -176,27 +206,30 @@ num = [0.5 3.5 4];  % numerator of the passive system
                     
         Q = [Q1, Q2; Q2', Q3];
         LMI1 = [M1 <= -eps];
-        LMI2 = [Q >= eps];
+        LMI2 = [Q >= eps];       
         
-
-
         F = [LMI1, LMI2];
         
         t = [];
 
     end
     
-    if solver == 1
-        opt = sdpsettings('solver','mosek','verbose',1);
-    elseif solver == 2       
-        opt = sdpsettings('solver','sdpt3','verbose',1);
-    elseif solver == 3        
-        opt = sdpsettings('solver','sedumi','verbose',1);
-    else
-        opt = [];
-    end
-
-
-    solvesdp(F,t,opt);
+%     if solver == 1
+%         opt = sdpsettings('solver','mosek','verbose',verb);
+% %         opt.beeponproblem=[17:-1:-9];
+% %         opt.showprogress=1;
+%         opt.removeequalities = 1;
+%         
+%         opt.debug=1;
+%     elseif solver == 2       
+%         opt = sdpsettings('solver','sdpt3','verbose',verb);
+%     elseif solver == 3        
+%         opt = sdpsettings('solver','sedumi','verbose',verb);
+%     else
+%         opt = [];
+%     end
+% 
+% 
+%     solvesdp(F,t,opt);
 %     solvesdp(F,[],opt);
     

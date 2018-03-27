@@ -182,17 +182,4 @@ num = [0.5 3.5 4];  % numerator of the passive system
 
     end
     
-    if solver == 1
-        opt = sdpsettings('solver','mosek','verbose',1);
-    elseif solver == 2       
-        opt = sdpsettings('solver','sdpt3','verbose',1);
-    elseif solver == 3        
-        opt = sdpsettings('solver','sedumi','verbose',1);
-    else
-        opt = [];
-    end
-
-
-    solvesdp(F,t,opt);
-%     solvesdp(F,[],opt);
     

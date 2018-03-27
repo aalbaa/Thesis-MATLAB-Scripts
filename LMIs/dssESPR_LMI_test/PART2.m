@@ -51,8 +51,8 @@ if SS == 0
     eps = 1e-4; % tolerance
 
     if LMI == 1
-        Q = sdpvar(n,n,'full','real');
-        % Q = sdpvar(n);
+%         Q = sdpvar(n,n,'full','real');
+        Q = sdpvar(n);
 
 
 
@@ -93,16 +93,6 @@ if SS == 0
         t = [];
 
     end
-
-    opt = sdpsettings('solver','mosek','verbose',1);
-    % opt = sdpsettings('solver','sdpt3','verbose',1);
-    % opt = sdpsettings('solver','sedumi','verbose',1);
-    % opt = [];
-
-
-    solvesdp(F,t,opt);
-%     solvesdp(F,[],opt);
-
 
 % in DSS 
 elseif SS == 1    
@@ -173,9 +163,10 @@ elseif SS == 1
         LMI2 = [M2 >= 0];
 
         t = sdpvar(1);
+
         M3 = Ecl*Q - Q'*Ecl;
         LMI3 = [M3 <= t]; % equality constraint
-        % LMI3 = [M3 == 0];
+%         LMI3 = [M3 == 0];
 
         % F = [LMI2, LMI3];
         F = [LMI1, LMI2, LMI3, t>=0];
@@ -201,20 +192,6 @@ elseif SS == 1
         
         t = [];
 
-    end
-    
-    if solver == 1
-        opt = sdpsettings('solver','mosek','verbose',1);
-    elseif solver == 2       
-        opt = sdpsettings('solver','sdpt3','verbose',1);
-    elseif solver == 3        
-        opt = sdpsettings('solver','sedumi','verbose',1);
-    else
-        opt = [];
-    end
-
-
-    solvesdp(F,t,opt);
-%     solvesdp(F,[],opt);
+    end   
     
 end
