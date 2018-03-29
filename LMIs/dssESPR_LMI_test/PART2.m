@@ -48,10 +48,21 @@ if SS == 0
     % This subsection is dedicated to trying the first LMI (which supposedly
     % has unwanted numerical properties (equality constraint is problematic)
 
-    eps = 1e-4; % tolerance
+%     eps = 1e-4; % tolerance
 
     if LMI == 1
-%         Q = sdpvar(n,n,'full','real');
+        Q = sdpvar(n);
+
+        M1 = [Acl*Q+(Acl*Q)',     Bcl-(Ccl*Q)';
+                Bcl'-(Ccl*Q),       -(Dcl+Dcl')]; % < 0
+
+        LMI1 = [M1 <= -eps];
+        
+        t = [];
+               
+        F = [LMI1];        
+        
+    elseif LMI == 2
         Q = sdpvar(n);
 
 
@@ -72,7 +83,7 @@ if SS == 0
         % F = [LMI2, LMI3];
         F = [LMI1, LMI2, LMI3, t>=0];
 
-    elseif LMI == 2   
+    elseif LMI == 3   
 
 
 
@@ -129,7 +140,17 @@ elseif SS == 1
     % this is converting the Cdss to Cdss2 with ZERO D
     % and ensuring that Dpdss != 0 so the conditions are met
     
-    
+       
+%         np = size(Apdss,1);
+%         nc = size(Bcdss,1);
+%         Ecdss = [Ecdss, zeros(nc,1);
+%                  zeros(1,nc+1)]; Ecdss(3,3) = 1;
+%         Acdss = [Acdss, zeros(nc,np-nc);
+%                 zeros(np-nc,np)]; Acdss(3,3) = 1;
+%         Bcdss = [Bcdss;zeros(np-nc,1)];
+%         Ccdss = [Ccdss, zeros(1,np-nc)];
+%         %thus
+% %         nc = np;
     
     % ensure D = 0
     Acl = [Apdss, -Bpdss*Ccdss;
@@ -149,8 +170,19 @@ elseif SS == 1
     eps = 1e-4; % tolerance
 
     if LMI == 1
-        Q = sdpvar(n,n,'full','real');
-        % Q = sdpvar(n);
+        Q = sdpvar(n);
+
+        M1 = [Acl*Q+(Acl*Q)',     Bcl-(Ccl*Q)';
+                Bcl'-(Ccl*Q),       -(Dcl+Dcl')]; % < 0
+
+        LMI1 = [M1 <= -eps];
+        
+        t = [];
+               
+        F = [LMI1];
+    elseif LMI == 2
+%         Q = sdpvar(n,n,'full','real');
+        Q = sdpvar(n);
 
 
 
@@ -171,7 +203,7 @@ elseif SS == 1
         % F = [LMI2, LMI3];
         F = [LMI1, LMI2, LMI3, t>=0];
 
-    elseif LMI == 2   
+    elseif LMI == 3   
 
 
 

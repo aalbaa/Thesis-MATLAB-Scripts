@@ -12,11 +12,7 @@ if nargin == 1
     D = 1;
 end
 
-Ap = G.A;
-Bp = G.B;
-Cp = G.C;
-Dp = G.D;
-Ep = G.E;
+[Ap, Bp, Cp, Dp, Ep]  = dssdata(G);
 
 n = size(Ap,1);
 

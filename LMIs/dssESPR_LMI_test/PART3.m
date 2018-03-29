@@ -62,7 +62,56 @@ num = [0.5 3.5 4];  % numerator of the passive system
 
     eps = 1e-2; % tolerance
 
-    if LMI == 1     
+    if LMI == 1
+         np = size(Apdss,1);
+        nc = size(Bcdss,1);
+        
+        Ecdss = [Ecdss, zeros(nc,1);
+                 zeros(1,nc+1)]; Ecdss(3,3) = 1;
+        Acdss = [Acdss, zeros(nc,np-nc);
+                zeros(np-nc,np)]; Acdss(3,3) = 1;
+        Bcdss = [Bcdss;zeros(np-nc,1)];
+        Ccdss = [Ccdss, zeros(1,np-nc)];
+        %thus
+        nc = np;
+        
+        
+        
+        Acbar = sdpvar(nc,nc,'full');
+        Ccbar = sdpvar(1,nc);
+        invert = 1; % to notify 'main' that we're using Acbar and Ccbar
+        
+        %size of Bc must be the same as size of Bp (look at Q2)
+        
+        Q1 = sdpvar(np);
+%         Q1 = sdpvar(np,np,'full','real');
+        Q2 = sdpvar(np,nc,'full','real');     
+%         Q3 = sdpvar(nc,np,'full','real');
+        Q3 = Q2';
+%         Q4 = sdpvar(nc,nc,'full','real');
+%         Q4 = sdpvar(nc);
+        Q4 = Q3;
+        
+        Q = [Q1, Q2; Q3, Q4];
+        
+        AclQ = [Apdss*Q1-Bpdss*Ccbar,  Apdss*Q2-Bpdss*Ccbar;
+                Bcdss*Cpdss*Q1+Acbar-Bcdss*Dpdss*Ccbar, Bcdss*Cpdss*Q2+Acbar-Bcdss*Dpdss*Ccbar];
+        Bcl = [Bpdss; Bcdss*Dpdss];
+        CclQ = [Cpdss*Q1-Dpdss*Ccdss*Q3,   Cpdss*Q2-Dpdss*Ccdss*Q4];
+        Dcl = Dpdss;
+        Ecl = blkdiag(Epdss,Ecdss);
+        
+        M1 = [AclQ+AclQ',   Bcl-(CclQ)';
+                Bcl'-CclQ,  -(Dcl+Dcl')];
+        
+        
+        LMI1 = [M1 <= -eps];
+        
+        t = [];
+        
+        F = [LMI1];        
+        
+    elseif LMI == 2
         
         %we want Q3 to be square, so size Ac must equal size Ap
         
@@ -70,15 +119,15 @@ num = [0.5 3.5 4];  % numerator of the passive system
         np = size(Apdss,1);
         nc = size(Bcdss,1);
         
-%         Ecdss = [Ecdss, zeros(nc,1);
-%                  zeros(1,nc+1)]; Ecdss(3,3) = 1;
-%         Acdss = [Acdss, zeros(nc,np-nc);
-%                 zeros(np-nc,np)]; Acdss(3,3) = 1;
-%         Bcdss = [Bcdss;zeros(np-nc,1)];
-%         Ccdss = [Ccdss, zeros(1,np-nc)];
-%         %thus
-%         nc = np;
-%         
+        Ecdss = [Ecdss, zeros(nc,1);
+                 zeros(1,nc+1)]; Ecdss(3,3) = 1;
+        Acdss = [Acdss, zeros(nc,np-nc);
+                zeros(np-nc,np)]; Acdss(3,3) = 1;
+        Bcdss = [Bcdss;zeros(np-nc,1)];
+        Ccdss = [Ccdss, zeros(1,np-nc)];
+        %thus
+        nc = np;
+        
         % does min realization affect things?
 %         PminSys = minreal(dss(Apdss,Bpdss,Cpdss,Dpdss,Epdss));
 %         CminSys = minreal(dss(Acdss,Bcdss,Ccdss,Dcdss,Ecdss));
@@ -131,22 +180,13 @@ num = [0.5 3.5 4];  % numerator of the passive system
         
         M1 = [AclQ+AclQ',   Bcl-(CclQ)';
                 Bcl'-CclQ,  -(Dcl+Dcl')];
-        
-%         
-%         
-%         
-%         
-% 
-%         M1 = [Acl*Q+(Acl*Q)',     Bcl-(Ccl*Q)';
-%                 Bcl'-(Ccl*Q),       -(Dcl+Dcl')]; % < 0
-        eps = 1e-2;
-        
+
         LMI1 = [M1 <= -eps];
 
         M2 = Ecl*Q; % >=0
         LMI2 = [M2 >= 0];
 
-        t = sdpvar(1);
+        
         M3 = Ecl*Q - Q'*Ecl;
         LMI3 = [M3 <= t]; % equality constraint
         % LMI3 = [M3 == 0];
@@ -154,7 +194,7 @@ num = [0.5 3.5 4];  % numerator of the passive system
         % F = [LMI2, LMI3];
         F = [LMI1, LMI2, LMI3, t>=0];
 
-    elseif LMI == 2   
+    elseif LMI == 3   
 
 
          
