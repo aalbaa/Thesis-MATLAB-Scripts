@@ -20,11 +20,14 @@ home;
 % LMI = in(2);
 % solver = in(3);
 part = 3;   % 1, 2, 3
-LMI = 1; % 1: KYP, 2: ESPR LMI1 (with equality), 3: ESPR LMI2 (No equality)
+LMI = 2; % 1: KYP, 2: ESPR LMI1 (with equality), 3: ESPR LMI2 (No equality)
 solver = 1; % 1: mosek. 2: sdpt3. 3: sedumi. anything else: no specific solve
 SS = 1;
 verb = 1;
 eps = 1e-4;
+
+
+t = [];
 
 % becomes 1 if Ac and Cc are replaced by Acbar=Ac*Q3 and Ccbar=Cc*Q3
 invert = 0; 
@@ -43,7 +46,7 @@ end
 
 opt = sdpsettings;
 opt.verbose = verb;
-opt.removeequalities = [1 (0)];
+% opt.removeequalities = [1 (0)];
 % solver = 2;
 
 if solver == 1    
@@ -70,12 +73,14 @@ if invert == 1
     Q3 = double(Q3);
     Ac = double(Acbar)*inv(Q3);
     Cc = double(Ccbar)*inv(Q3);
+    Ec = double(Ecbar)*inv(Q3);
 end
 
 Bc = double(Bcdss);
 % Cc = double(Ccdss);
 Dc = double(Dcdss);
-Ec = double(Ecdss);
+% Ec = double(Ecdss);
 
+Ctf = tf(dss(Ac,Bc,Cc,Dc,Ec));
 
 t = double(t);

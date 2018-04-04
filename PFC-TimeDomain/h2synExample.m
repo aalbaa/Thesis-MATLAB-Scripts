@@ -30,52 +30,87 @@ home;
 
 %number of exegenous inputs
 wSize = 1;
+uSize = 1;
 
 %Transfer function used
 
 PlantNumerator = [1 2];
 PlantDenominator = [1 -1 1];
+PlantDenominator = [1 -10 100];
 Gtf = tf(PlantNumerator,PlantDenominator);
 
 % state space
-[Ag Bg Cg Dg] = tf2ss(PlantNumerator,PlantDenominator);
+[Ap Bp Cp Dp] = ssdata(Gtf);
 
 % Constructing the regulator matrices
 
-A = Ag;
+A = Ap;
 
 B1 = zeros(size(A,1),wSize);   
-B2 = Bg;
+B2 = Bp;
 
-C1 = [-Cg;zeros(size(Cg,1),size(A,2))];
-C2 = -Cg;
+C1 = [-Cp;zeros(size(Cp,1),size(A,2))];
+C2 = -Cp;
 
-D11 = [ones(size(Cg,1),wSize); zeros(size(Cg,1),wSize)];
-D12 = [-Dg;ones(size(Cg,1),size(Bg,2))];
-D21 = ones(size(Cg,1),wSize);
-D22 = -Dg;
+D11 = [ones(size(Cp,1),wSize); zeros(size(Cp,1),wSize)];
+D12 = [-Dp;ones(size(Cp,1),size(Bp,2))];
+D21 = ones(size(Cp,1),wSize);
+D22 = -Dp;
 
-%constructing P (for optimal control formulation)
+% %constructing P (for optimal control formulation)
+% 
+% P = ss(Ag,[B1 B2], [C1;C2], [D11 D12; D21 D22]);
+% 
+% %finding the optimal controller K, and the closed loop ss CL
+% 
+% [K CL] = h2syn(P,size(B2,2),size(Cg,1));
+% 
+% 
+% %controller transfer function
+% [Cnum, Cden] = ss2tf(K.A,K.B,K.C,K.D);
+% Ctf = tf(Cnum,Cden);
+% 
+% 
+% %closed loop
+% Gcl = feedback(Gtf,Ctf);
+% 
+% disp("Poles of Gcl: ");
+% disp(pole(Gcl));
+% 
+% disp("Poles of CL (ss): ");
+% disp(eig(CL.A));
 
-P = ss(Ag,[B1 B2], [C1;C2], [D11 D12; D21 D22]);
+A = Ap;
+B = Bp;
+C = Cp;
+D = Dp;
 
-%finding the optimal controller K, and the closed loop ss CL
+X1 = sdpvar(size(A,1),size(A,1));
+X2 = sdpvar(size(A,1),size(A,1));
+Y1 = sdpvar(size(C1,2),size(C1,2));
+Y2 = sdpvar(size(C1,2),size(C1,2));
+Z = sdpvar(size(C,1),size(C,1));
+gamma = sdpvar(1,1);
 
-[K CL] = h2syn(P,size(B2,2),size(Cg,1));
+An = sdpvar(2,2);
+Bn = sdpvar(2,1);
+Cn = sdpvar(1,2);
+Dn = sdpvar(1,1);
 
 
-%controller transfer function
-[Cnum, Cden] = ss2tf(K.A,K.B,K.C,K.D);
-Ctf = tf(Cnum,Cden);
 
+%%% LMI 1;
+E11 = A*Y1+Y1*A'+B2*Cn + Cn'*B2';
+E12 = A+An'+B2*Dn*C2;
+E13 = B1+B2*Dn*D21;
+E22 = X1*A+A'*X1+Bn*C2+C2'*Bn';
+E23 = X1*B1+Bn+Bn*D21;
 
-%closed loop
-Gcl = feedback(Gtf,Ctf);
-
-disp("Poles of Gcl: ");
-disp(pole(Gcl));
-
-disp("Poles of CL (ss): ");
-disp(eig(CL.A));
+LMI1 = [E11 E12 E13;
+        E12' E22 E23;
+        E13' E23' -1];
+    
+F = [LMI1<0];
+solve(F,gamma);
 
 

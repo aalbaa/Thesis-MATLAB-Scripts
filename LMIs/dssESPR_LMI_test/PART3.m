@@ -28,16 +28,25 @@ num = [0.5 3.5 4];  % numerator of the passive system
         %%%%%%
         %%%%%%
     Ptf = tf([1 bbar],as');
+%     Ptf = tf([1 1 1],[1 2 1]);
     Ctf = tf(qs', [1 pbar]);    
     
-    [Pdss, Apdss, Bpdss, Cpdss, Dpdss, Epdss] = tf2dss(Ptf);
-    [Apdss, Bpdss, Cpdss, Dpdss, Epdss, PdssD] = ss2dssD(Pdss,1); 
+    if LMI == 2 || LMI == 3
+        [Pdss, Apdss, Bpdss, Cpdss, Dpdss, Epdss] = tf2dss(Ptf);
+        [Apdss, Bpdss, Cpdss, Dpdss, Epdss, PdssD] = ss2dssD(Pdss,1); 
+        
+        [Cdss, Acdss, Bcdss, Ccdss, Dcdss, Ecdss] = tf2dss(Ctf);    
+        [Acdss, Bcdss, Ccdss, Dcdss, Ecdss, CdssD] = ss2dssD(Cdss,0); 
+    
+    else
+        [Apdss, Bpdss, Cpdss, Dpdss, Epdss] = dssdata(Ptf);        
+        [Acdss, Bcdss, Ccdss, Dcdss, Ecdss] = dssdata(Ctf);    
+    end
     
     
     % now we want to find such a plant
     % we'll assume that we have Ecdss
-    [Cdss, Acdss, Bcdss, Ccdss, Dcdss, Ecdss] = tf2dss(Ctf);    
-    [Acdss, Bcdss, Ccdss, Dcdss, Ecdss, CdssD] = ss2dssD(Cdss,0); 
+    
     
     % this is converting the Cdss to Cdss2 with ZERO D
     % and ensuring that Dpdss != 0 so the conditions are met        
@@ -119,12 +128,12 @@ num = [0.5 3.5 4];  % numerator of the passive system
         np = size(Apdss,1);
         nc = size(Bcdss,1);
         
-        Ecdss = [Ecdss, zeros(nc,1);
-                 zeros(1,nc+1)]; Ecdss(3,3) = 1;
-        Acdss = [Acdss, zeros(nc,np-nc);
-                zeros(np-nc,np)]; Acdss(3,3) = 1;
-        Bcdss = [Bcdss;zeros(np-nc,1)];
-        Ccdss = [Ccdss, zeros(1,np-nc)];
+%         Ecdss = [Ecdss, zeros(nc,1);
+%                  zeros(1,nc+1)]; Ecdss(3,3) = 1;
+%         Acdss = [Acdss, zeros(nc,np-nc);
+%                 zeros(np-nc,np)]; Acdss(3,3) = 1;
+        Bcdss = [rand(size(Bcdss));zeros(np-nc,1)];
+%         Ccdss = [Ccdss, zeros(1,np-nc)];
         %thus
         nc = np;
         
@@ -157,12 +166,14 @@ num = [0.5 3.5 4];  % numerator of the passive system
         
         Acbar = sdpvar(nc,nc,'full');
         Ccbar = sdpvar(1,nc);
-        
+        Ecbar = sdpvar(nc,nc,'full');
+        invert = 1;
         %size of Bc must be the same as size of Bp (look at Q2)
         
         Q1 = sdpvar(np);
 %         Q1 = sdpvar(np,np,'full','real');
-        Q2 = sdpvar(np,nc,'full','real');     
+%         Q2 = sdpvar(np,nc,'full','real');     
+        Q2 = sdpvar(np);      %change it to symmetirc
 %         Q3 = sdpvar(nc,np,'full','real');
         Q3 = Q2';
 %         Q4 = sdpvar(nc,nc,'full','real');
@@ -171,28 +182,34 @@ num = [0.5 3.5 4];  % numerator of the passive system
         
         Q = [Q1, Q2; Q3, Q4];
         
-        AclQ = [Apdss*Q1-Bpdss*Ccdss*Q3,  Apdss*Q2-Bpdss*Ccdss*Q4;
-                Bcdss*Cpdss*Q1+Acdss*Q3-Bcdss*Dpdss*Ccdss*Q3, Bcdss*Cpdss*Q2+Acdss*Q4-Bcdss*Dpdss*Ccdss*Q4];
+%         AclQ = [Apdss*Q1-Bpdss*Ccdss*Q3,  Apdss*Q2-Bpdss*Ccdss*Q4;
+%                 Bcdss*Cpdss*Q1+Acdss*Q3-Bcdss*Dpdss*Ccdss*Q3, Bcdss*Cpdss*Q2+Acdss*Q4-Bcdss*Dpdss*Ccdss*Q4];
+         AclQ = [Apdss*Q1-Bpdss*Ccbar,  Apdss*Q2-Bpdss*Ccbar;
+                Bcdss*Cpdss*Q1+Acbar-Bcdss*Dpdss*Ccbar, Bcdss*Cpdss*Q2+Acbar-Bcdss*Dpdss*Ccbar];
+            
         Bcl = [Bpdss; Bcdss*Dpdss];
-        CclQ = [Cpdss*Q1-Dpdss*Ccdss*Q3,   Cpdss*Q2-Dpdss*Ccdss*Q4];
+        
+        CclQ = [Cpdss*Q1-Dpdss*Ccbar,   Cpdss*Q2-Dpdss*Ccbar];
         Dcl = Dpdss;
-        Ecl = blkdiag(Epdss,Ecdss);
+        EclQ = [Epdss*Q1,   Epdss*Q2;
+                Ecbar,  Ecbar];
         
         M1 = [AclQ+AclQ',   Bcl-(CclQ)';
                 Bcl'-CclQ,  -(Dcl+Dcl')];
 
         LMI1 = [M1 <= -eps];
 
-        M2 = Ecl*Q; % >=0
+%         M2 = Ecl*Q; % >=0
+        M2 = EclQ;
         LMI2 = [M2 >= 0];
 
         
-        M3 = Ecl*Q - Q'*Ecl;
-        LMI3 = [M3 <= t]; % equality constraint
-        % LMI3 = [M3 == 0];
-
-        % F = [LMI2, LMI3];
-        F = [LMI1, LMI2, LMI3, t>=0];
+%         M3 = Ecl*Q - Q'*Ecl';
+        M3 = EclQ-EclQ';
+        LMI3 = [M3 == 0];
+        
+        t = [];
+        F = [LMI1, LMI2, LMI3];
 
     elseif LMI == 3   
 
