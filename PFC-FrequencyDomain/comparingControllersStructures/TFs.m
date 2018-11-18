@@ -11,3 +11,5 @@ Gp2 = tf([1 -b],[1 -a 0]);
 Gp3 = tf([1 -b],[1 2*w_n*zeta w_n^2]);
 
 s =tf('s');
+
+Gp4 = tf([1 -b],[1 -2*w_n*zeta w_n^2]);

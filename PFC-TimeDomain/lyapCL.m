@@ -5,11 +5,30 @@
 %   Assuming that Cc is given
 %   Assuming that Dc is given (Dc!=0 to ensure it's bi-proper)
 % 
-clear all;
-close all;
+% clear all;
+% close all;
 % home;
 
-Ptf = tf([1 -2],[1 10 100]);
+function [Gbar Cfb Gcl] = lyapCL(Ptf, solver, verb, eps1)
+% Ptf = tf([1 -2],[1 10 100]);
+
+if nargin <= 3
+    eps1 = 1e-5;
+    if nargin <= 2
+        verb = 0;
+        if nargin == 1
+            solver = 1;
+        end
+    end
+end
+
+        
+% %%% solver params
+% solver = 1;
+% verb = 1;
+%  eps1 = 1e-5;
+
+
 [Ap, Bp, Cp, Dp] = ssdata(Ptf);
 
 np = size(Ap,1);
@@ -28,7 +47,8 @@ P = [P1, P2;
 Acbar = sdpvar(nc,nc,'full');
 Bcbar = sdpvar(nc,1);
 
-Cc = ones(1,nc); % assuming some arbitrary structure
+% Cc = ones(1,nc); % assuming some arbitrary structure
+Cc = place(Ap,Bp,-1:-1:-nc);
 Dc = 1;
 % 
 PAcl = [P1*Ap-P1*Bp*Dc*Cp+Bcbar*Cp,     -P1*Bp*Cc+Acbar,
@@ -39,32 +59,29 @@ PAcl = [P1*Ap-P1*Bp*Dc*Cp+Bcbar*Cp,     -P1*Bp*Cc+Acbar,
 
 
 %%% LMIs:
-LMI1 = [PAcl+PAcl' <= -eps];
+LMI1 = [PAcl+PAcl' <= -eps1];
 
-LMI2 = [P >= eps];
+LMI2 = [P >= eps1];
 
 
 %%% KYP LMI;
 
 % Q = sdpvar(np);
-% Q = P2;
-% 
-% KYP1 = [ [Ac*Q+Ac'*Q,      Cc'-Bcbar;
-%          Cc-Bcbar',  -(Dc+Dc)] <= -eps];
-% 
-% F = [LMI1, LMI2, KYP1];
+Q = P2;
+
+KYP1 = [ [Acbar+Acbar',      Cc'-Bcbar;
+         Cc-Bcbar',  -(Dc+Dc)] <= -eps];
+
+F = [LMI1, LMI2, KYP1];
 
 
 
-F = [LMI1, LMI2];
+% F = [LMI1, LMI2];
 
 
 
 
-%%% solver params
-solver = 1;
-verb = 1;
-eps = 1e-5;
+
 
 
 
@@ -88,6 +105,13 @@ end
 sol=solvesdp(F,[],opt);
 
 
+success = ~isempty(findstr(sol.info,'Successfully'));
+
+if ~success
+    disp('Error: no solution or some other error');
+    sol
+    return;
+end
 
 %%% recovering matrices
 
@@ -105,3 +129,6 @@ Ctf = tf(Csys);
 Gcl = feedback(Ptf,Ctf);
 
 Gbar = Ptf+1/Ctf;
+
+Cfb = Ctf;
+end

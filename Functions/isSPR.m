@@ -1,4 +1,4 @@
-function [isespr, b, c] = isSPR(SYS, eps, solver)
+function [isspr, b, c] = isSPR(SYS, eps, solver)
 if nargin == 2    
     solver = 'mosek';
 elseif nargin == 1
@@ -7,12 +7,9 @@ elseif nargin == 1
 end
 
 
-[A, B, C, D, E] = dssdata(SYS);
+[A, B, C, D] = ssdata(SYS);
 
-if any(any(E ~=eye(size(A))))
-    disp('plant must be strictly proper');
-    return;
-end
+
  
 n = size(A,1);
 
@@ -41,5 +38,5 @@ sol=solvesdp(F,[],opt);
 a = double(LMI1);
 
 
-isespr = a;
+isspr = ~isempty(findstr(sol.info,'Successfully'));
 end

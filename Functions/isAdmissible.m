@@ -1,69 +1,34 @@
 % This script is to test the admissibility of (E,A)
+function [isadmissible] = isAdmissible(SYS, solver, eps, verb)
 
-Ptf = tf([1 -1],[1 2 1]); % this is admissible
+% SYS = tf([1 1],[1 2 1]);
+% eps = 1e-5;
+% solver = 1;
 
-[A, B, C, D, E] = dssdata(Ptf);
+if nargin <= 3
+    verb = 0;
+    if nargin <= 2
+        eps = 1e-5;
+        if nargin == 1            
+            solver = 1;
+        end
+    end
+end
+
+    
+
+[A, B, C, D, E] = dssdata(SYS);
 
 n = size(A,1);
 
 P = sdpvar(n);
 
-
-
-eps = 1e-5;
-% M = A'*P*A - E'*P*E;
-% 
-% if ~any(any(isnan(double(M)))) && any(eig(double(M)) >=0)
-%     disp('infeasible');
-% end
-%     
-% LMI1 = [M  <= -eps];
-% 
-% % gamma = sdpvar(1);
-% % 
-% % H11 = A'*P*A-E'*P*E+C'*C;
-% % H12 = A'*P*B+C'*D;
-% % H21 = B'*P*A + D'*C;
-% % H22 = -gamma+B'*P*B+D'*D;
-% % 
-% % LMI1 = [[H11, H12;
-% %         H21, H22] <= -eps];
-% % LMI2 = [E'*P*E >= 0];
-% 
-% % LMI1 = [A'*P*A <= -eps+ E'*P*E];
-% LMI2 = [E'*P*E >= 0];
-% 
-% gamma = [];
-% 
-% F = [LMI1, LMI2];
-
-% 
-% P = sdpvar(n);
-% gamma = sdpvar(1);
-% 
-% H11 = A'*P*A-E'*P*E+C'*C;
-% H12 = A'*P*B+C'*D;
-% H22 = B'*P*B+D'*D;
-% 
-% LMI1 = [[H11, H12;
-%         H12', H22] <= -eps];
-% LMI2 = [E'*P*E >= 0];
-% 
-% LMI3 = [gamma >= eps];
-% 
-% t=[];
-% F = [LMI2, LMI1];
-
-
 X = sdpvar(n);
 Y = sdpvar(n);
 
-eps = 1e-5;
-
 LMI1 =[E'*X*A+A'*X*E == -E'*Y*E];
-% LMI1 =[E'*X*E+A'*X*E <= -eps];
 LMI2 = [Y >= eps];
-LMI3 = [X >= 0];
+LMI3 = [X >= eps];
 
 F = [LMI1, LMI2, LMI3];
 t = [];
@@ -72,8 +37,8 @@ t = [];
 
 
 
-solver = 1;
-verb = 1;
+% solver = 1;
+% verb = 1;
 
 opt = sdpsettings;
 opt.verbose = verb;
@@ -93,3 +58,9 @@ end
 
 sol=solvesdp(F,t,opt);
 
+% a = double(LMI1);
+% b = double(LMI2);
+% c = double(LMI3);
+
+isadmissible = ~isempty(findstr(sol.info,'Successfully'));
+end
